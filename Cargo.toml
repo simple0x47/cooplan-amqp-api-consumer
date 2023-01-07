@@ -6,3 +6,27 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+cooplan-amqp-api-shared = "0.1.0"
+cooplan-lapin-wrapper = "0.4.2"
+
+# JSON Serialization
+serde = { version = "1.0.141", features = ["derive"] }
+serde_json = "1.0.82"
+
+# Async
+tokio = { version = "1", features = ["sync", "time"] }
+futures-util = "0.3.25"
+
+# RabbitMQ
+lapin = "2.1"
+
+# Logging
+log = "0.4.17"
+
+# UUID
+[dependencies.uuid]
+version = "1.1.2"
+features = [
+    "v4", # Lets you generate random UUIDs
+    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+]
