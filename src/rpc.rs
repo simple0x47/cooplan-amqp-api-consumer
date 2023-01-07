@@ -18,7 +18,7 @@ use tokio::time::{timeout, Instant};
 /// * `Err` if an error occurred while sending the request or while waiting for the response.
 /// The replier is also informed of the error.
 pub async fn send_request_and_wait_for_response<ResponseType: for<'de> Deserialize<'de>>(
-    api_consumer: ApiConsumer,
+    api_consumer: Arc<ApiConsumer>,
     id: &str,
     channel: Arc<Channel>,
     request: Vec<u8>,
