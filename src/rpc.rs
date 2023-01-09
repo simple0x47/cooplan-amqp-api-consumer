@@ -1,4 +1,5 @@
 use crate::error::{Error, ErrorKind};
+use crate::util::send_error_to_replier;
 use cooplan_amqp_api_shared::api::input::request_result::RequestResult;
 use cooplan_lapin_wrapper::config::api_consumer::ApiConsumer;
 use futures_util::StreamExt;
@@ -19,7 +20,7 @@ use tokio::time::{timeout, Instant};
 /// The replier is also informed of the error.
 pub async fn send_request_and_wait_for_response<ResponseType: for<'de> Deserialize<'de>>(
     api_consumer: Arc<ApiConsumer>,
-    id: &str,
+    input_id: &str,
     channel: Arc<Channel>,
     request: Vec<u8>,
     replier: Sender<Result<ResponseType, Error>>,
@@ -28,7 +29,7 @@ pub async fn send_request_and_wait_for_response<ResponseType: for<'de> Deseriali
     let input = match api_consumer
         .input()
         .iter()
-        .find(|element| element.id() == id)
+        .find(|element| element.id() == input_id)
     {
         Some(input) => input,
         None => {
@@ -36,7 +37,7 @@ pub async fn send_request_and_wait_for_response<ResponseType: for<'de> Deseriali
                 replier,
                 Error::new(
                     ErrorKind::AutoConfigFailure,
-                    format!("missing input api consumer with id: '{}'", id),
+                    format!("missing input api consumer with id: '{}'", input_id),
                 ),
             );
         }
@@ -267,18 +268,4 @@ async fn wait_for_response<ResponseType: for<'de> Deserialize<'de>>(
     }
 
     Ok(())
-}
-
-/// Send the error to the replier and ALWAYS return an instance of the error through the Err.
-/// The Ok variant is never used.
-fn send_error_to_replier<ResponseType: for<'de> Deserialize<'de>>(
-    replier: Sender<Result<ResponseType, Error>>,
-    error: Error,
-) -> Result<(), Error> {
-    match replier.send(Err(error.clone())) {
-        Ok(_) => (),
-        Err(_) => log::error!("failed to send erroneous reply"),
-    }
-
-    Err(error)
 }
