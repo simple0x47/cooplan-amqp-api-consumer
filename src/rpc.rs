@@ -24,7 +24,6 @@ pub async fn send_request_and_wait_for_response<ResponseType: for<'de> Deseriali
     channel: Arc<Channel>,
     request: Vec<u8>,
     replier: Sender<Result<ResponseType, Error>>,
-    response_timeout_in_seconds: u64,
 ) -> Result<(), Error> {
     let input = match api_consumer
         .input()
@@ -137,7 +136,7 @@ pub async fn send_request_and_wait_for_response<ResponseType: for<'de> Deseriali
     let ack_options = input.response().acknowledge();
 
     return wait_for_response(
-        response_timeout_in_seconds,
+        input.wait_for_response_timeout_after_seconds(),
         replier,
         correlation_id,
         &mut consumer,

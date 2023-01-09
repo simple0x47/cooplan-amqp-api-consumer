@@ -20,7 +20,6 @@ pub async fn read_from_stream<ResponseType: for<'de> Deserialize<'de>>(
     output_id: &str,
     channel: Arc<Channel>,
     replier: Sender<Result<ResponseType, Error>>,
-    timeout_after_seconds: u64,
 ) -> Result<(), Error> {
     let output = match api_consumer
         .output()
@@ -80,6 +79,7 @@ pub async fn read_from_stream<ResponseType: for<'de> Deserialize<'de>>(
 
     let ack_options = output.acknowledge();
 
+    let timeout_after_seconds = output.timeout_after_seconds();
     let start = Instant::now();
     let mut start_elapsed_seconds = 0u64;
 
