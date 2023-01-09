@@ -154,13 +154,15 @@ async fn wait_for_response<ResponseType: for<'de> Deserialize<'de>>(
     ack_options: &BasicAckOptions,
 ) -> Result<(), Error> {
     let start = Instant::now();
+    let mut start_elapsed_seconds = 0u64;
 
     loop {
-        if start.elapsed().as_secs() > response_timeout_in_seconds {
+        start_elapsed_seconds = start.elapsed().as_secs();
+        if start_elapsed_seconds >= response_timeout_in_seconds {
             return send_error_to_replier(
                 replier,
                 Error::new(
-                    ErrorKind::AmqpFailure,
+                    ErrorKind::ApiFailure,
                     format!(
                         "timed out waiting for response with correlation id '{}'",
                         correlation_id
@@ -170,7 +172,7 @@ async fn wait_for_response<ResponseType: for<'de> Deserialize<'de>>(
         }
 
         let delivery = match timeout(
-            Duration::from_secs(response_timeout_in_seconds),
+            Duration::from_secs(response_timeout_in_seconds - start_elapsed_seconds),
             consumer.next(),
         )
         .await
