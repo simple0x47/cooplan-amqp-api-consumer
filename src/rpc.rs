@@ -217,34 +217,32 @@ async fn wait_for_response<ResponseType: for<'de> Deserialize<'de>>(
             Err(error) => log::warn!("failed to acknowledge reply from api: {}", error),
         }
 
-        let response = match serde_json::from_slice::<RequestResult>(&delivery.data) {
+        let request_result = match serde_json::from_slice::<RequestResult>(&delivery.data) {
             Ok(response) => response,
             Err(error) => {
                 return send_error_to_replier(
                     replier,
                     Error::new(
                         ErrorKind::ApiFailure,
-                        format!("failed to deserialize response: {}", error),
+                        format!("failed to deserialize request result: {}", error),
                     ),
                 );
             }
         };
 
-        let definition = match response {
-            RequestResult::Ok(definition) => {
-                match serde_json::from_value::<ResponseType>(definition) {
-                    Ok(definition) => definition,
-                    Err(error) => {
-                        return send_error_to_replier(
-                            replier,
-                            Error::new(
-                                ErrorKind::ApiFailure,
-                                format!("failed to deserialize definition: {}", error),
-                            ),
-                        );
-                    }
+        let response = match request_result {
+            RequestResult::Ok(response) => match serde_json::from_value::<ResponseType>(response) {
+                Ok(response) => response,
+                Err(error) => {
+                    return send_error_to_replier(
+                        replier,
+                        Error::new(
+                            ErrorKind::ApiFailure,
+                            format!("failed to deserialize response: {}", error),
+                        ),
+                    );
                 }
-            }
+            },
             RequestResult::Err(error) => {
                 return send_error_to_replier(
                     replier,
@@ -256,7 +254,7 @@ async fn wait_for_response<ResponseType: for<'de> Deserialize<'de>>(
             }
         };
 
-        match replier.send(Ok(definition)) {
+        match replier.send(Ok(response)) {
             Ok(_) => (),
             Err(_) => {
                 return Err(Error::new(
