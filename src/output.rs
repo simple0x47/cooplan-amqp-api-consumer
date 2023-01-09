@@ -9,6 +9,12 @@ use std::time::Duration;
 use tokio::sync::oneshot::Sender;
 use tokio::time::{timeout, Instant};
 
+/// Utility for reading values from a RabbitMQ stream.
+///
+/// # Returns
+/// `Ok` if the read value has been sent correctly through the replier.
+/// `Err` if an error occurred during the reading process.
+/// The replier is also informed of the error.
 pub async fn read_from_stream<ResponseType: for<'de> Deserialize<'de>>(
     api_consumer: Arc<ApiConsumer>,
     output_id: &str,
